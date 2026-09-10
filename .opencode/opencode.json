@@ -11,6 +11,11 @@
     }
   },
   "references": {
+    "yunify/qingcloud-sdk-python": {
+      "repository": "yunify/qingcloud-sdk-python",
+      "branch": "main",
+      "description": "青云sdk源码参考",
+    }
   },
   "instructions": [
     ".opencode/agent-rules/git.md"
