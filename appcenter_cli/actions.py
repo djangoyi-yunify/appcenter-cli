@@ -149,7 +149,7 @@ DESCRIBE_CLUSTER_JOBS = Action(
 DESCRIBE_CLUSTER_ENV = Action(
     "DescribeClusterEnvironment",
     params=[
-        Param("cluster", "str", True, "集群 ID"),
+        Param("cluster_id", "str", True, "集群 ID"),
         Param("role", "str", False, "将要获取环境变量的角色，可留空"),
     ],
 )

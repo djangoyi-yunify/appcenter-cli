@@ -77,9 +77,11 @@ class Client:
             path=path,
             signature_method="HmacSHA256",
         )
-        request_params["signature"] = signature
 
+        # sign_request already returns a URL-encoded signature; append it
+        # as-is to avoid double-encoding (which breaks API signature check).
         query = urllib.parse.urlencode(request_params)
+        query += "&signature=" + signature
         return "%s://%s:%d%s?%s" % (cfg.protocol, cfg.host, cfg.port, path, query)
 
     def send_request(
