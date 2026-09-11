@@ -244,6 +244,16 @@ def test_missing_required_param():
     assert "Missing required parameter" in r.stderr
 
 
+def test_describe_app_versions_requires_at_least_one():
+    # The API requires at least one of app_ids/version_ids; the CLI now
+    # enforces this locally instead of letting the API reject the request.
+    r = run_cli("describe-app-versions", "--config", CONFIG)
+    assert r.returncode == 2
+    assert "at least one of" in r.stderr
+    assert "--app-ids" in r.stderr
+    assert "--version-ids" in r.stderr
+
+
 def test_invalid_json_input():
     r = run_cli(
         "deploy-app-version", "--config", CONFIG,
