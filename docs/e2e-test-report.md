@@ -34,10 +34,17 @@
 
 | 项 | 说明 |
 | --- | --- |
-| `describe-app-versions` 必填约束 | API 要求 `app_ids` 或 `version_ids` 至少一个，但 action 定义标为可选。CLI 不报错，由 API 返回错误。建议后续在 action 定义中补充"至少一个"约束。 |
+| `describe-app-versions` 必填约束 | API 要求 `app_ids` 或 `version_ids` 至少一个。已通过新增的 `required_any` 机制在 CLI 本地校验（见 Bug 3），不再由 API 返回错误。 |
 | describe 查询对不存在资源的行为 | 返回空结果（`ret_code=0`）而非错误，如 `describe-cluster-nodes --cluster cl-nonexistent` 返回空 `node_set`。 |
 | `describe-cluster-env` 真实集群 | 对真实集群返回 `PermissionDenied, describe resource failed`（取决于集群状态与账号权限），请求本身已正确构造。 |
 | 变更命令安全验证 | 14 个变更命令均以不存在的资源 ID 测试，全部返回 API 错误（无真实副作用），确认参数构造正确。 |
+
+### Bug 3：`describe-app-versions` 缺少"至少一个"参数约束
+
+- **位置**：`appcenter_cli/actions.py`、`appcenter_cli/cli.py`
+- **现象**：不带 `app_ids`/`version_ids` 调用时，CLI 直接发请求，由 API 返回 `InvailidRequestFormat`（ret_code 1100）
+- **修复**：为 `Action` 新增 `required_any` 机制（每组参数至少提供一个），`_check_required` 在本地校验并报错 `Missing required parameter(s): at least one of --app-ids, --version-ids`（退出码 2）
+- **验证**：新增 4 个单元测试 + 1 个 e2e 测试，全部通过
 
 ## 4. 测试覆盖明细
 
