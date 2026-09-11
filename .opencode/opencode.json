@@ -18,6 +18,6 @@
     }
   },
   "instructions": [
-    ".opencode/agent-rules/git.md"
+    "agent-rules/git.md"
   ]
 }
