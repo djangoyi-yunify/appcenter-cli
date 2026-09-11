@@ -22,6 +22,15 @@ def test_expand_params_lists():
     }
 
 
+def test_expand_params_multi_deploy_zones():
+    client = Client(Config(access_key_id="a", secret_access_key="s", zone="pek3"))
+    expanded = client._expand_params({"multi_deploy_zones": ["pek3b", "pek3d"]})
+    assert expanded == {
+        "multi_deploy_zones.1": "pek3b",
+        "multi_deploy_zones.2": "pek3d",
+    }
+
+
 def test_expand_params_list_of_dicts():
     client = Client(Config(access_key_id="a", secret_access_key="s", zone="pek3a"))
     expanded = client._expand_params(

@@ -97,6 +97,7 @@ DEPLOY_APP_VERSION = Action(
         Param("version_id", "str", True, "将要部署应用的版本 ID"),
         Param("conf", "json", True, "集群的配置信息（转义并去除空格的 JSON 格式）"),
         Param("debug", "int", False, "集群是否为开发测试集群"),
+        Param("multi_deploy_zones", "list", False, "多可用区部署的可用区列表，如 pek3b、pek3d"),
     ],
     table_columns=["cluster_id", "job_id", "app_id", "app_version"],
 )
