@@ -105,6 +105,12 @@ def _check_required(params, action):
         raise ConfigError(
             "Missing required parameter(s): %s" % ", ".join("--%s" % m.replace("_", "-") for m in missing)
         )
+    for group in action.required_any_groups():
+        if not any(p in params for p in group):
+            raise ConfigError(
+                "Missing required parameter(s): at least one of %s"
+                % ", ".join("--%s" % g.replace("_", "-") for g in group)
+            )
 
 
 def main(argv=None):

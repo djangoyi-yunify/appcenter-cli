@@ -23,18 +23,25 @@ class Param:
 
 
 class Action:
-    def __init__(self, name, verb="GET", path="/iaas/", params=None, table_columns=None):
+    def __init__(self, name, verb="GET", path="/iaas/", params=None, table_columns=None, required_any=None):
         self.name = name
         self.verb = verb
         self.path = path
         self.params = params or []
         self.table_columns = table_columns or []
+        # Groups of parameters where at least one must be provided.
+        # Each group is a list of param names; the request is invalid if
+        # none of the params in a group is present.
+        self.required_any = required_any or []
 
     def param_names(self):
         return [p.name for p in self.params]
 
     def required_params(self):
         return [p.name for p in self.params if p.required]
+
+    def required_any_groups(self):
+        return self.required_any
 
 
 # ---------------------------------------------------------------------------
@@ -72,6 +79,7 @@ DESCRIBE_APP_VERSIONS = Action(
         Param("limit", "int", False, "返回数据长度，默认为 20，最大 100"),
     ],
     table_columns=["version_id", "name", "status", "create_time"],
+    required_any=[["app_ids", "version_ids"]],
 )
 
 DESCRIBE_APP_VERSION_ATTACHMENTS = Action(
