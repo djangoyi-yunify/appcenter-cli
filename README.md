@@ -47,6 +47,20 @@ pip install git+ssh://git@github.com/djangoyi-yunify/appcenter-cli.git
 pip install -e .
 ```
 
+## 卸载
+
+按安装方式对应卸载：
+
+```bash
+# 方式一：uv tool 安装
+uv tool uninstall appcenter-cli
+
+# 方式二 / 方式三：pip 安装
+pip uninstall appcenter-cli
+```
+
+> 提示：卸载仅移除 `appcenter` 命令与 Python 包，**不会删除**认证配置文件（`~/.qingcloud/config`）及其中保存的凭据。如需彻底清理，请手动删除该配置文件。
+
 ## 认证配置
 
 凭据按以下优先级解析（高到低）：
