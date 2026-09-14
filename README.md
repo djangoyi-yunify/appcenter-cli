@@ -23,6 +23,14 @@ uv tool install git+https://github.com/djangoyi-yunify/appcenter-cli.git
 appcenter --version
 ```
 
+> 提示：某些 AI agent 环境可能会因为安全原因限制对系统目录（如 `~/.local/share/uv`）的写入，导致 `uv tool install` 报权限错误。此时可通过 `UV_TOOL_DIR` / `UV_TOOL_BIN_DIR` 指定可写目录，例如：
+>
+> ```bash
+> UV_TOOL_DIR=/tmp/uv-tools UV_TOOL_BIN_DIR=/tmp/uv-bin \
+>   uv tool install git+https://github.com/djangoyi-yunify/appcenter-cli.git
+> export PATH="/tmp/uv-bin:$PATH"
+> ```
+
 ### 方式二：pip 从 Git 仓库安装
 
 ```bash
