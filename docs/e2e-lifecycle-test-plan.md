@@ -177,6 +177,9 @@
 | H-04 | 增加内存 | `resize-cluster --cluster <id> --node-role "" --memory 2048` | 退出码 0，返回 `job_id`，`ret_code=0` |
 | H-05 | 等待任务完成 | 轮询 `describe-cluster-jobs` | job 状态 `successful` |
 | H-06 | 验证内存 | `describe-clusters --clusters <id>` | `memory=2048` |
+| H-07 | 扩容磁盘 | `resize-cluster --cluster <id> --node-role "" --storage-size 20` | 退出码 0，返回 `job_id`，`ret_code=0`（磁盘 10G→20G） |
+| H-08 | 等待任务完成 | 轮询 `describe-cluster-jobs` | job 状态 `successful` |
+| H-09 | 验证磁盘 | `describe-clusters --clusters <id>` | `storage=20` |
 
 ### I. 水平扩容
 
