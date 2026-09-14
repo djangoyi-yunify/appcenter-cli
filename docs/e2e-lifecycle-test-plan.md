@@ -167,12 +167,14 @@
 
 ### H. 垂直扩容
 
+> 单角色应用需显式传 `--node-role ""`（空字符串角色），否则返回 `InternalError`（5000）。
+
 | ID | 用例 | 步骤 | 预期结果 |
 | --- | --- | --- | --- |
-| H-01 | 增加 CPU | `resize-cluster --cluster <id> --cpu 2` | 退出码 0，返回 `job_id`，`ret_code=0` |
+| H-01 | 增加 CPU | `resize-cluster --cluster <id> --node-role "" --cpu 2` | 退出码 0，返回 `job_id`，`ret_code=0` |
 | H-02 | 等待任务完成 | 轮询 `describe-cluster-jobs` | job 状态 `successful` |
 | H-03 | 验证 CPU | `describe-clusters --clusters <id>` | `cpu=2` |
-| H-04 | 增加内存 | `resize-cluster --cluster <id> --memory 2048` | 退出码 0，返回 `job_id`，`ret_code=0` |
+| H-04 | 增加内存 | `resize-cluster --cluster <id> --node-role "" --memory 2048` | 退出码 0，返回 `job_id`，`ret_code=0` |
 | H-05 | 等待任务完成 | 轮询 `describe-cluster-jobs` | job 状态 `successful` |
 | H-06 | 验证内存 | `describe-clusters --clusters <id>` | `memory=2048` |
 

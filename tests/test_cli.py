@@ -71,3 +71,33 @@ def test_collect_multi_deploy_zones_absent():
     )
     params = _collect_params(args, ACTIONS["deploy-app-version"])
     assert "multi_deploy_zones" not in params
+
+
+def test_resize_cluster_has_storage_size_and_instance_class():
+    action = ACTIONS["resize-cluster"]
+    names = action.param_names()
+    assert "storage_size" in names
+    assert "instance_class" in names
+    assert "storage" not in names  # 旧参数名已修正为 storage_size
+
+
+def test_collect_resize_cluster_params():
+    parser = _build_parser()
+    args = parser.parse_args(
+        [
+            "resize-cluster",
+            "--cluster", "cl-x",
+            "--node-role", "",
+            "--cpu", "2",
+            "--memory", "2048",
+            "--storage-size", "20",
+            "--instance-class", "202",
+        ]
+    )
+    params = _collect_params(args, ACTIONS["resize-cluster"])
+    assert params["cluster"] == "cl-x"
+    assert params["node_role"] == ""
+    assert params["cpu"] == 2
+    assert params["memory"] == 2048
+    assert params["storage_size"] == 20
+    assert params["instance_class"] == 202

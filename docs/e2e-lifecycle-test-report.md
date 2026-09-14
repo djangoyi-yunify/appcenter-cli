@@ -8,9 +8,9 @@
 | 测试环境 | 真实青云 API（`api.qingcloud.com`），`--config .qingcloud/config` |
 | 测试应用 | Redis Standalone（`app-zydumbxo` / `appv-tvzeju2i`） |
 | 部署模式 | 多可用区（region `pek3`，zones `pek3b`/`pek3d`）+ 单可用区（zone `pek3b`） |
-| 测试集群 | 多可用区 `cl-5sel9a77`、单可用区 `cl-huvno0tu`（均已删除清理） |
-| 生命周期阶段 | 创建、水平扩容、修改配置、关闭/启动、删除 **全部通过** |
-| 垂直扩容 | **应用不支持**（`advanced_actions` 无 `scale_vertical`），如实记录跳过 |
+| 测试集群 | 多可用区 `cl-5sel9a77`、单可用区 `cl-huvno0tu`、垂直扩容 `cl-heyz3n8j`（均已删除清理） |
+| 生命周期阶段 | 创建、垂直扩容、水平扩容、修改配置、关闭/启动、删除 **全部通过** |
+| 垂直扩容 | ✅ `resize-cluster --node-role ""`，cpu 1→2、memory 1024→2048 |
 
 ## 2. 测试环境
 
@@ -33,11 +33,18 @@
 | G-02 | 等待集群 active | ✅ 约 1 分钟收敛 `active` |
 | G-03 | 验证最小规格 | ✅ `cpu=1`、`mem=1024`、`storage=10`、`node_count=1` |
 
-### H. 垂直扩容 ⚠️（应用不支持，跳过）
+### H. 垂直扩容 ✅
 
-- `resize-cluster --cluster cl-5sel9a77 --cpu 2` 返回 `InternalError`（ret_code 5000）
-- **根因**：集群 `advanced_actions` 为 `change_vxnet,scale_horizontal`，**不含 `scale_vertical`**——Redis Standalone 应用不支持垂直扩容
-- 按测试计划风险条款：应用能力限制，如实记录并跳过，**不视为 CLI 缺陷**
+> 首次尝试 `resize-cluster --cluster cl-5sel9a77 --cpu 2`（不带 `--node-role`）返回 `InternalError`（5000），误判为应用不支持。经查 API 文档确认支持后，用新集群 `cl-heyz3n8j` 补测，**显式传 `--node-role ""` 后成功**。
+
+| ID | 用例 | 结果 |
+| --- | --- | --- |
+| H-01 | 扩容 CPU | ✅ `resize-cluster --node-role "" --cpu 2`，`ret_code=0`，resize_info `cpu=2` |
+| H-02 | 等待任务完成 | ✅ job `successful`（约 3 分钟） |
+| H-03 | 验证 CPU | ✅ `cpu_asgn=2` |
+| H-04 | 扩容内存 | ✅ `resize-cluster --node-role "" --memory 2048`，`ret_code=0`，resize_info `memory=2048` |
+| H-05 | 等待任务完成 | ✅ job `successful`（约 3 分钟） |
+| H-06 | 验证内存 | ✅ `mem_asgn=2048` |
 
 ### I. 水平扩容 ✅
 
@@ -87,17 +94,17 @@
 
 ## 4. 测试发现
 
-### 发现 1：Redis Standalone 不支持垂直扩容（应用能力限制）
+### 发现 1：`resize-cluster` 与 `add-cluster-nodes` 均需显式传 `--node-role ""`
 
-- `resize-cluster` 返回 `InternalError`（5000）
-- 集群 `advanced_actions` 仅含 `change_vxnet,scale_horizontal`，无 `scale_vertical`
-- **结论**：非 CLI 缺陷，属应用能力限制；测试如实记录并跳过
+- 不带 `--node-role` 时，`resize-cluster` 与 `add-cluster-nodes` 均返回 `InternalError`（5000）
+- 显式传 `--node-role ""`（空字符串角色）后均成功
+- **结论**：CLI 参数构造正确；单角色应用需显式指定空角色，属 API 行为。首次误判为"应用不支持垂直扩容"，经查 API 文档确认支持后补测通过
 
-### 发现 2：单角色应用 `add-cluster-nodes` 需显式传 `--node-role ""`
+### 发现 2：CLI `resize-cluster` 参数名与 SDK 不一致（潜在缺陷）
 
-- 不带 `--node-role` 时返回 `InternalError`（5000）
-- 显式传 `--node-role ""`（空字符串角色）后成功
-- **结论**：CLI 参数构造正确；单角色应用需显式指定空角色，属 API 行为
+- CLI 参数：`--storage`、`--gpu`；SDK/API 参数：`storage_size`、`instance_class`
+- `--storage` 应为 `--storage_size` 才能正确映射到 API；`--gpu` 为 API 未定义参数
+- **结论**：本次测试仅用 `cpu`/`memory`（参数名一致）验证通过；`storage`/`gpu` 参数名待修正（见后续修复）
 
 ### 发现 3：测试计划 I-05 修正
 
@@ -112,7 +119,7 @@
 
 ## 5. 结论
 
-- CLI 的集群生命周期管理在真实 API 环境下**端到端可用**：创建（多/单可用区）、水平扩容、修改配置、关闭/启动、删除均正常。
-- 通过真实测试发现：**垂直扩容为应用能力限制**（非 CLI 缺陷）、**单角色应用需显式传空 `node_role`**。
+- CLI 的集群生命周期管理在真实 API 环境下**端到端可用**：创建（多/单可用区）、垂直扩容、水平扩容、修改配置、关闭/启动、删除均正常。
+- 通过真实测试发现：**单角色应用需显式传空 `node_role`**（`resize-cluster` 与 `add-cluster-nodes` 均如此）；**CLI `resize-cluster` 的 `--storage`/`--gpu` 参数名与 API 不一致**（待修正）。
 - 测试集群已全部删除清理，无残留资源。
 - 为支持多可用区部署，CLI 新增 `--multi-deploy-zones` 参数（提交 `b79dcad`），单元测试 19 个全部通过。
