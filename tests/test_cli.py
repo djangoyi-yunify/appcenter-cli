@@ -3,7 +3,13 @@
 import pytest
 
 from appcenter_cli.actions import ACTIONS, Action, Param
-from appcenter_cli.cli import _build_parser, _check_required, _collect_params
+from appcenter_cli.cli import (
+    _build_parser,
+    _check_required,
+    _collect_params,
+    UsageError,
+    main,
+)
 from appcenter_cli.config import ConfigError
 
 
@@ -50,7 +56,7 @@ def test_deploy_app_version_has_multi_deploy_zones():
 
 
 def test_collect_multi_deploy_zones_as_list():
-    parser = _build_parser()
+    parser, _ = _build_parser()
     args = parser.parse_args(
         [
             "deploy-app-version",
@@ -65,7 +71,7 @@ def test_collect_multi_deploy_zones_as_list():
 
 
 def test_collect_multi_deploy_zones_absent():
-    parser = _build_parser()
+    parser, _ = _build_parser()
     args = parser.parse_args(
         ["deploy-app-version", "--version-id", "appv-x", "--conf", "{}"]
     )
@@ -82,7 +88,7 @@ def test_resize_cluster_has_storage_size_and_instance_class():
 
 
 def test_collect_resize_cluster_params():
-    parser = _build_parser()
+    parser, _ = _build_parser()
     args = parser.parse_args(
         [
             "resize-cluster",
@@ -111,7 +117,7 @@ def test_describe_app_versions_has_status_param():
 
 
 def test_collect_status_as_list():
-    parser = _build_parser()
+    parser, _ = _build_parser()
     args = parser.parse_args(
         [
             "describe-app-versions",
@@ -126,7 +132,7 @@ def test_collect_status_as_list():
 
 
 def test_collect_status_absent():
-    parser = _build_parser()
+    parser, _ = _build_parser()
     args = parser.parse_args(
         ["describe-app-versions", "--app-ids", "app-zydumbxo"]
     )
@@ -144,7 +150,7 @@ def test_upgrade_clusters_has_params():
 
 
 def test_collect_upgrade_clusters_params():
-    parser = _build_parser()
+    parser, _ = _build_parser()
     args = parser.parse_args(
         [
             "upgrade-clusters",
@@ -156,3 +162,160 @@ def test_collect_upgrade_clusters_params():
     params = _collect_params(args, ACTIONS["upgrade-clusters"])
     assert params["app_version"] == "appv-tvzeju2i"
     assert params["clusters"] == ["cl-x", "cl-y"]
+
+
+# ---------------------------------------------------------------------------
+# AI-agent friendliness: help output
+# ---------------------------------------------------------------------------
+
+
+def test_help_shows_human_description():
+    parser, _ = _build_parser()
+    sub = parser.subparsers.choices["describe-clusters"]
+    assert "获取集群信息" in sub.description
+    # The top-level listing uses the description, not the raw API action name.
+    assert "获取集群信息" in parser.format_help()
+
+
+def test_help_shows_examples():
+    parser, _ = _build_parser()
+    sub = parser.subparsers.choices["describe-clusters"]
+    assert "示例" in sub.epilog
+    assert "appcenter describe-clusters" in sub.epilog
+
+
+def test_help_marks_required_any():
+    parser, _ = _build_parser()
+    sub = parser.subparsers.choices["describe-app-versions"]
+    assert "至少提供一个" in sub.epilog
+    assert "--app-ids" in sub.epilog
+    assert "--version-ids" in sub.epilog
+
+
+def test_help_shows_notes():
+    parser, _ = _build_parser()
+    sub = parser.subparsers.choices["upgrade-clusters"]
+    assert "注意事项" in sub.epilog
+    assert "upgrade_policy" in sub.epilog
+
+
+def test_help_has_trace_and_dry_run():
+    parser, _ = _build_parser()
+    sub = parser.subparsers.choices["describe-clusters"]
+    assert "--trace" in sub.format_help()
+    assert "--dry-run" in sub.format_help()
+
+
+# ---------------------------------------------------------------------------
+# AI-agent friendliness: wiki subcommand
+# ---------------------------------------------------------------------------
+
+
+def test_wiki_index_lists_commands(capsys):
+    assert main(["wiki"]) == 0
+    out = capsys.readouterr().out
+    assert "describe-clusters" in out
+    assert "获取集群信息" in out
+    assert "wiki" in out
+
+
+def test_wiki_detail(capsys):
+    assert main(["wiki", "describe-clusters"]) == 0
+    out = capsys.readouterr().out
+    assert "DescribeClusters" in out
+    assert "参数" in out
+    assert "示例" in out
+    assert "注意事项" in out
+
+
+def test_wiki_unknown_command(capsys):
+    assert main(["wiki", "no-such-command"]) == 2
+    err = capsys.readouterr().err
+    assert "unknown command" in err
+
+
+# ---------------------------------------------------------------------------
+# AI-agent friendliness: error output
+# ---------------------------------------------------------------------------
+
+
+def test_no_command_exit_2(capsys):
+    assert main([]) == 2
+    captured = capsys.readouterr()
+    assert "usage:" in captured.err
+
+
+def test_collect_invalid_json_reports_param():
+    parser, _ = _build_parser()
+    args = parser.parse_args(
+        ["deploy-app-version", "--version-id", "appv-x", "--conf", "not-json"]
+    )
+    with pytest.raises(UsageError) as exc:
+        _collect_params(args, ACTIONS["deploy-app-version"])
+    assert "--conf" in str(exc.value)
+
+
+def test_collect_invalid_int_reports_param():
+    parser, _ = _build_parser()
+    args = parser.parse_args(["describe-apps", "--limit", "abc"])
+    with pytest.raises(UsageError) as exc:
+        _collect_params(args, ACTIONS["describe-apps"])
+    assert "--limit" in str(exc.value)
+
+
+def test_collect_conf_must_be_object():
+    parser, _ = _build_parser()
+    args = parser.parse_args(
+        ["deploy-app-version", "--version-id", "appv-x", "--conf", "[]"]
+    )
+    with pytest.raises(UsageError) as exc:
+        _collect_params(args, ACTIONS["deploy-app-version"])
+    assert "JSON object" in str(exc.value)
+
+
+def test_collect_conf_object_ok():
+    parser, _ = _build_parser()
+    args = parser.parse_args(
+        ["deploy-app-version", "--version-id", "appv-x", "--conf", '{"name":"demo"}']
+    )
+    params = _collect_params(args, ACTIONS["deploy-app-version"])
+    assert params["conf"] == '{"name":"demo"}'
+
+
+def test_usage_error_shows_usage_line(capsys, monkeypatch):
+    # Missing required params must be reported even without credentials,
+    # and the error must include the usage line.
+    monkeypatch.delenv("QINGCLOUD_ACCESS_KEY_ID", raising=False)
+    monkeypatch.delenv("QINGCLOUD_SECRET_ACCESS_KEY", raising=False)
+    monkeypatch.delenv("QINGCLOUD_CONFIG", raising=False)
+    monkeypatch.setenv("HOME", "/tmp/nonexistent-home-for-test")
+    assert main(["deploy-app-version"]) == 2
+    err = capsys.readouterr().err
+    assert "usage:" in err
+    assert "Missing required parameter" in err
+    assert "Missing credentials" not in err
+
+
+def test_dry_run_prints_request_without_sending(capsys, monkeypatch):
+    monkeypatch.setenv("QINGCLOUD_ACCESS_KEY_ID", "AK")
+    monkeypatch.setenv("QINGCLOUD_SECRET_ACCESS_KEY", "SK")
+    monkeypatch.setenv("QINGCLOUD_ZONE", "pek3")
+    monkeypatch.delenv("QINGCLOUD_CONFIG", raising=False)
+    assert main(["describe-clusters", "--dry-run", "--limit", "1"]) == 0
+    out = capsys.readouterr().out
+    assert "[dry-run]" in out
+    assert "action=DescribeClusters" in out
+    assert "signature=" in out
+    assert "***" in out  # signature masked
+
+
+def test_trace_prints_request_to_stderr(capsys, monkeypatch):
+    monkeypatch.setenv("QINGCLOUD_ACCESS_KEY_ID", "AK")
+    monkeypatch.setenv("QINGCLOUD_SECRET_ACCESS_KEY", "SK")
+    monkeypatch.setenv("QINGCLOUD_ZONE", "pek3")
+    monkeypatch.delenv("QINGCLOUD_CONFIG", raising=False)
+    # --trace + --dry-run: no real API call is made.
+    assert main(["describe-clusters", "--trace", "--dry-run", "--limit", "1"]) == 0
+    captured = capsys.readouterr()
+    assert "[trace]" in captured.err
+    assert "[dry-run]" in captured.out

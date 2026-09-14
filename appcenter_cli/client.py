@@ -84,6 +84,31 @@ class Client:
         query += "&signature=" + signature
         return "%s://%s:%d%s?%s" % (cfg.protocol, cfg.host, cfg.port, path, query)
 
+    def build_request(
+        self,
+        action: str,
+        params: dict = None,
+        verb: str = "GET",
+        path: str = "/iaas/",
+    ) -> str:
+        """Build the full signed request URL without sending it.
+
+        Used by ``--dry-run`` and ``--trace`` so callers can preview the
+        exact request that would be sent.
+
+        Args:
+            action: the API action name, e.g. "DescribeClusters".
+            params: action-specific request parameters.
+            verb: HTTP method, "GET" or "POST".
+            path: the URI path, defaults to "/iaas/".
+
+        Returns:
+            The full request URL (including the signature).
+        """
+        params = params or {}
+        expanded = self._expand_params(params)
+        return self._build_url(action, expanded, verb, path)
+
     def send_request(
         self,
         action: str,
@@ -105,9 +130,7 @@ class Client:
         Raises:
             APIError: if the API returns a non-zero ret_code.
         """
-        params = params or {}
-        expanded = self._expand_params(params)
-        url = self._build_url(action, expanded, verb, path)
+        url = self.build_request(action, params, verb, path)
 
         retry_time = 0
         while True:

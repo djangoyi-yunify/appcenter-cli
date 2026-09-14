@@ -109,6 +109,9 @@ appcenter --help
 # 查看某个命令的参数
 appcenter describe-clusters --help
 
+# 查看某个命令的详细用法与注意事项（示例、约束、注意事项）
+appcenter wiki describe-clusters
+
 # 列出集群（JSON 输出，默认）
 appcenter describe-clusters
 
@@ -133,6 +136,36 @@ appcenter describe-cluster-nodes --cluster cl-xxxx
 appcenter get-cluster-monitor --resource cln-xxxx --step 5m \
   --start-time 2026-09-10T00:00:00Z --end-time 2026-09-10T01:00:00Z \
   --meters cpu --meters memory
+```
+
+### 面向 AI Agent 的辅助参数
+
+所有子命令均支持以下参数，便于 AI Agent 调试与安全演练：
+
+```bash
+# 预览将发送的请求而不真正执行（适合删除/销毁等破坏性操作前演练）
+appcenter delete-clusters --clusters cl-xxxx --dry-run
+
+# 打印实际发送的 HTTP 请求（签名已隐藏，不泄露密钥）
+appcenter describe-clusters --trace
+
+# 两者可组合：打印请求但不发送
+appcenter upgrade-clusters --app-version appv-xxxx --clusters cl-xxxx --trace --dry-run
+```
+
+- `--dry-run`：构建并打印完整请求 URL，不发送，退出码 0。
+- `--trace`：将请求 URL 打印到 stderr（`signature` 值以 `***` 隐藏），随后正常发送。
+
+### wiki 子命令
+
+`appcenter wiki` 是本地帮助命令（不访问 API），展示各子命令的详细用法：
+
+```bash
+# 列出所有命令及说明
+appcenter wiki
+
+# 查看某个命令的详细用法：参数、约束、示例、注意事项
+appcenter wiki describe-clusters
 ```
 
 ## 支持的命令
@@ -162,6 +195,8 @@ appcenter get-cluster-monitor --resource cln-xxxx --step 5m \
 | `associate-eip-to-cluster-node` | AssociateEipToClusterNode | 绑定公网 IP 到节点 |
 | `dissociate-eip-from-cluster-node` | DissociateEipFromClusterNode | 解绑节点公网 IP |
 | `get-cluster-monitor` | GetClusterMonitor | 获取集群监控数据 |
+
+> 另有 `wiki` 子命令（非 API 动作），用于查看各命令的详细用法与注意事项，见上文「wiki 子命令」。
 
 ## 尚未实现的 API 动作
 
@@ -195,6 +230,11 @@ appcenter get-cluster-monitor --resource cln-xxxx --step 5m \
 
 - 默认输出格式化 JSON，便于 AI Agent 解析。
 - 使用 `--output table` 输出对齐表格，便于人类阅读。
+- 错误信息统一输出到 stderr（stdout 保持干净，便于机器解析），并区分退出码：
+  - `0`：成功
+  - `1`：API 错误（含 `ret_code` 与 `message`）
+  - `2`：参数或配置错误（如缺少必填参数、JSON 格式错误、缺少凭据）
+- 参数错误会指明具体参数名（如 `invalid input for --conf: ...`），并附带 usage 行，便于 AI Agent 自我纠正。
 
 ## 开发与测试
 

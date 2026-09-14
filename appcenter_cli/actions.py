@@ -1,13 +1,17 @@
 """Definitions of the AppCenter API actions exposed by the CLI.
 
-Each action describes its name, HTTP verb, URI path, and the request
-parameters (name, type, required, description). Parameter types:
+Each action describes its name, HTTP verb, URI path, the request
+parameters (name, type, required, description), plus AI-agent friendly
+metadata: a human-readable description, usage examples, and notes.
+
+Parameter types:
 
 - str: single string value
 - int: single integer value
 - list: repeated parameter, serialized as ``name.1``, ``name.2``, ...
 - list_dict: list of dicts, serialized as ``name.1.subkey``, ...
-- json: a JSON-encoded string value
+- json: a JSON-encoded string value (``json_object=True`` requires a JSON
+  object, not an array or scalar)
 
 The action set is derived from the official API documentation:
 https://docsv4.qingcloud.com/user_guide/development_docs/api/api_list/appcenter/cloud/
@@ -15,15 +19,28 @@ https://docsv4.qingcloud.com/user_guide/development_docs/api/api_list/appcenter/
 
 
 class Param:
-    def __init__(self, name, ptype="str", required=False, description=""):
+    def __init__(self, name, ptype="str", required=False, description="", json_object=False):
         self.name = name
         self.ptype = ptype
         self.required = required
         self.description = description
+        # For ptype == "json": require the parsed value to be a JSON object.
+        self.json_object = json_object
 
 
 class Action:
-    def __init__(self, name, verb="GET", path="/iaas/", params=None, table_columns=None, required_any=None):
+    def __init__(
+        self,
+        name,
+        verb="GET",
+        path="/iaas/",
+        params=None,
+        table_columns=None,
+        required_any=None,
+        description="",
+        examples=None,
+        notes=None,
+    ):
         self.name = name
         self.verb = verb
         self.path = path
@@ -33,6 +50,13 @@ class Action:
         # Each group is a list of param names; the request is invalid if
         # none of the params in a group is present.
         self.required_any = required_any or []
+        # Human-readable description shown in --help and `appcenter wiki`.
+        self.description = description
+        # Example command lines (without the leading "appcenter " prefix
+        # is NOT required; examples are shown verbatim).
+        self.examples = examples or []
+        # Notes / caveats shown in `appcenter wiki <command>`.
+        self.notes = notes or []
 
     def param_names(self):
         return [p.name for p in self.params]
@@ -50,6 +74,16 @@ class Action:
 
 DESCRIBE_APPS = Action(
     "DescribeApps",
+    description="列出应用",
+    examples=[
+        "appcenter describe-apps",
+        "appcenter describe-apps --app app-zydumbxo",
+        "appcenter describe-apps --category database --output table",
+    ],
+    notes=[
+        "只读命令，不会修改任何资源。",
+        "默认返回 20 条，可用 --limit 调整（最大 100）。",
+    ],
     params=[
         Param("app", "str", False, "应用 ID"),
         Param("app_name", "str", False, "应用名称"),
@@ -68,6 +102,16 @@ DESCRIBE_APPS = Action(
 
 DESCRIBE_APP_VERSIONS = Action(
     "DescribeAppVersions",
+    description="列出应用版本",
+    examples=[
+        "appcenter describe-app-versions --app-ids app-zydumbxo",
+        "appcenter describe-app-versions --version-ids appv-tvzeju2i",
+        "appcenter describe-app-versions --app-ids app-zydumbxo --status active",
+    ],
+    notes=[
+        "--app-ids 与 --version-ids 至少提供一个。",
+        "只读命令，不会修改任何资源。",
+    ],
     params=[
         Param("app_ids", "list", False, "应用 ID，可以是一个或多个"),
         Param("version_ids", "list", False, "应用版本 ID，可以是一个或多个"),
@@ -85,6 +129,14 @@ DESCRIBE_APP_VERSIONS = Action(
 
 DESCRIBE_APP_VERSION_ATTACHMENTS = Action(
     "DescribeAppVersionAttachments",
+    description="获取应用版本配置文件",
+    examples=[
+        "appcenter describe-app-version-attachments --version-id appv-tvzeju2i --attachment-ids att-xxxx",
+    ],
+    notes=[
+        "需要先通过其他途径获取 attachment ID。",
+        "只读命令，不会修改任何资源。",
+    ],
     params=[
         Param("content_keys", "list", False, "应用配置文件的名称，默认 config.json"),
         Param("attachment_ids", "list", True, "应用配置文件的 ID"),
@@ -94,9 +146,21 @@ DESCRIBE_APP_VERSION_ATTACHMENTS = Action(
 
 DEPLOY_APP_VERSION = Action(
     "DeployAppVersion",
+    description="部署应用版本（创建集群）",
+    examples=[
+        "appcenter deploy-app-version --version-id appv-tvzeju2i --conf '{\"name\":\"demo\",\"vxnet\":\"vxnet-0\"}'",
+        "appcenter deploy-app-version --version-id appv-tvzeju2i --conf '{\"name\":\"demo\",\"vxnet\":\"vxnet-0\"}' --debug 1",
+        "appcenter deploy-app-version --version-id appv-tvzeju2i --conf '{\"name\":\"demo\",\"vxnet\":\"vxnet-0\"}' --multi-deploy-zones pek3b --multi-deploy-zones pek3d",
+    ],
+    notes=[
+        "--conf 必须为 JSON 对象（不能是数组或标量）。",
+        "--debug 1 创建开发测试集群，可用于测试未上架/开发中的版本。",
+        "多可用区部署时，--zone 传区域（如 pek3），并用 --multi-deploy-zones 指定可用区（如 pek3b、pek3d）。",
+        "创建集群是异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+    ],
     params=[
         Param("version_id", "str", True, "将要部署应用的版本 ID"),
-        Param("conf", "json", True, "集群的配置信息（转义并去除空格的 JSON 格式）"),
+        Param("conf", "json", True, "JSON 对象格式的集群配置，如 {\"name\":\"demo\",\"vxnet\":\"vxnet-0\"}", json_object=True),
         Param("debug", "int", False, "集群是否为开发测试集群"),
         Param("multi_deploy_zones", "list", False, "多可用区部署的可用区列表，如 pek3b、pek3d"),
     ],
@@ -109,6 +173,17 @@ DEPLOY_APP_VERSION = Action(
 
 DESCRIBE_CLUSTERS = Action(
     "DescribeClusters",
+    description="获取集群信息",
+    examples=[
+        "appcenter describe-clusters",
+        "appcenter describe-clusters --clusters cl-xxxx",
+        "appcenter describe-clusters --status active --output table",
+    ],
+    notes=[
+        "只读命令，不会修改任何资源。",
+        "默认返回 20 条，可用 --limit 调整（最大 100）。",
+        "加 --verbose 1 可查看集群的 app_version_info（含可升级版本 upgrade_policy）。",
+    ],
     params=[
         Param("clusters", "list", False, "集群 ID，一个或多个"),
         Param("apps", "list", False, "集群所属的应用 ID，一个或多个"),
@@ -132,6 +207,13 @@ DESCRIBE_CLUSTERS = Action(
 
 DESCRIBE_CLUSTER_NODES = Action(
     "DescribeClusterNodes",
+    description="获取集群节点信息",
+    examples=[
+        "appcenter describe-cluster-nodes --cluster cl-xxxx",
+    ],
+    notes=[
+        "只读命令，不会修改任何资源。",
+    ],
     params=[
         Param("cluster", "str", True, "集群 ID"),
         Param("cluster_nodes", "list", False, "集群节点 ID"),
@@ -145,6 +227,15 @@ DESCRIBE_CLUSTER_NODES = Action(
 
 DESCRIBE_CLUSTER_JOBS = Action(
     "DescribeClusterJobs",
+    description="获取集群操作日志",
+    examples=[
+        "appcenter describe-cluster-jobs --app app-zydumbxo",
+        "appcenter describe-cluster-jobs --app app-zydumbxo --jobs j-xxxx",
+    ],
+    notes=[
+        "只读命令，不会修改任何资源。",
+        "用于查询 deploy/start/stop 等异步操作的进度。",
+    ],
     params=[
         Param("app", "str", True, "应用 ID"),
         Param("jobs", "list", False, "操作日志 ID"),
@@ -158,6 +249,13 @@ DESCRIBE_CLUSTER_JOBS = Action(
 
 DESCRIBE_CLUSTER_ENV = Action(
     "DescribeClusterEnvironment",
+    description="获取集群环境变量",
+    examples=[
+        "appcenter describe-cluster-env --cluster-id cl-xxxx",
+    ],
+    notes=[
+        "只读命令，不会修改任何资源。",
+    ],
     params=[
         Param("cluster_id", "str", True, "集群 ID"),
         Param("role", "str", False, "将要获取环境变量的角色，可留空"),
@@ -166,6 +264,13 @@ DESCRIBE_CLUSTER_ENV = Action(
 
 DESCRIBE_CLUSTER_DISPLAY_TABS = Action(
     "DescribeClusterDisplayTabs",
+    description="获取集群 display tabs",
+    examples=[
+        "appcenter describe-cluster-display-tabs --cluster cl-xxxx --display-tabs tab-xxxx",
+    ],
+    notes=[
+        "只读命令，不会修改任何资源。",
+    ],
     params=[
         Param("cluster", "str", True, "集群 ID"),
         Param("display_tabs", "str", True, "display tabs 的名称"),
@@ -174,18 +279,41 @@ DESCRIBE_CLUSTER_DISPLAY_TABS = Action(
 
 START_CLUSTERS = Action(
     "StartClusters",
+    description="启动集群",
+    examples=[
+        "appcenter start-clusters --clusters cl-xxxx",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+        "仅对已停止的集群有效。",
+    ],
     params=[Param("clusters", "list", True, "将要启动的集群 ID")],
     table_columns=["job_id", "cluster_id"],
 )
 
 STOP_CLUSTERS = Action(
     "StopClusters",
+    description="停止集群",
+    examples=[
+        "appcenter stop-clusters --clusters cl-xxxx",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+        "停止后集群不再产生计算费用（存储仍计费）。",
+    ],
     params=[Param("clusters", "list", True, "将要停止的集群 ID")],
     table_columns=["job_id", "cluster_id"],
 )
 
 RESTART_CLUSTER_SERVICE = Action(
     "RestartClusterService",
+    description="重启集群服务",
+    examples=[
+        "appcenter restart-cluster-service --cluster cl-xxxx",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+    ],
     params=[
         Param("cluster", "str", True, "将要重启服务的集群 ID"),
         Param("role", "str", False, "重启的集群角色"),
@@ -195,6 +323,16 @@ RESTART_CLUSTER_SERVICE = Action(
 
 DELETE_CLUSTERS = Action(
     "DeleteClusters",
+    description="删除集群",
+    examples=[
+        "appcenter delete-clusters --clusters cl-xxxx",
+        "appcenter delete-clusters --clusters cl-xxxx --direct-cease 1",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+        "默认删除后进入回收站，可用 --direct-cease 1 直接彻底销毁。",
+        "破坏性操作，建议先用 --dry-run 预览请求。",
+    ],
     params=[
         Param("clusters", "list", True, "一个或多个集群 ID"),
         Param("direct_cease", "int", False, "是否直接彻底销毁集群，1 为是，默认为 0"),
@@ -204,12 +342,28 @@ DELETE_CLUSTERS = Action(
 
 CEASE_CLUSTERS = Action(
     "CeaseClusters",
+    description="销毁集群",
+    examples=[
+        "appcenter cease-clusters --clusters cl-xxxx",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+        "彻底销毁，不可恢复。破坏性操作，建议先用 --dry-run 预览请求。",
+    ],
     params=[Param("clusters", "list", True, "将要销毁的集群 ID")],
     table_columns=["job_id", "cluster_id"],
 )
 
 RECOVER_CLUSTERS = Action(
     "RecoverClusters",
+    description="恢复集群",
+    examples=[
+        "appcenter recover-clusters --clusters cl-xxxx --zone pek3",
+    ],
+    notes=[
+        "从回收站恢复已删除的集群。",
+        "--zone 为必填参数（区域 ID，注意需要小写）。",
+    ],
     params=[
         Param("clusters", "list", True, "待恢复的集群 ID"),
         Param("zone", "str", True, "区域 ID，注意需要小写"),
@@ -219,6 +373,15 @@ RECOVER_CLUSTERS = Action(
 
 RESIZE_CLUSTER = Action(
     "ResizeCluster",
+    description="调整集群节点规格",
+    examples=[
+        "appcenter resize-cluster --cluster cl-xxxx --cpu 2 --memory 2048",
+        "appcenter resize-cluster --cluster cl-xxxx --storage-size 20",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+        "--memory 单位 MB，--storage-size 单位 GB。",
+    ],
     params=[
         Param("cluster", "str", True, "集群 ID"),
         Param("memory", "int", False, "节点将要增加或减小到的内存，单位 MB"),
@@ -233,6 +396,14 @@ RESIZE_CLUSTER = Action(
 
 CHANGE_CLUSTER_VXNET = Action(
     "ChangeClusterVxnet",
+    description="切换集群私网",
+    examples=[
+        "appcenter change-cluster-vxnet --cluster cl-xxxx --vxnet vxnet-xxxx",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+        "--private-ips 为 JSON 数组，如 '[{\"node_id\":\"cln-1\",\"private_ip\":\"10.0.0.1\"}]'。",
+    ],
     params=[
         Param("cluster", "str", True, "集群 ID"),
         Param("vxnet", "str", True, "集群即将加入的网络的 ID"),
@@ -244,16 +415,33 @@ CHANGE_CLUSTER_VXNET = Action(
 
 UPDATE_CLUSTER_ENV = Action(
     "UpdateClusterEnvironment",
+    description="更新集群环境变量",
+    examples=[
+        "appcenter update-cluster-env --cluster cl-xxxx --env '{\"key\":\"value\"}'",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+        "--env 必须为 JSON 对象。",
+    ],
     params=[
         Param("cluster", "str", True, "集群 ID"),
         Param("role", "str", False, "将要修改的角色，如集群未配置角色，可留空"),
-        Param("env", "json", True, "JSON 格式的环境变量，例如 {\"key\": \"value\"}"),
+        Param("env", "json", True, "JSON 对象格式的环境变量，例如 {\"key\": \"value\"}", json_object=True),
     ],
     table_columns=["job_id", "cluster_id"],
 )
 
 UPGRADE_CLUSTERS = Action(
     "UpgradeClusters",
+    description="升级集群版本",
+    examples=[
+        "appcenter upgrade-clusters --app-version appv-tvzeju2i --clusters cl-xxxx",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+        "目标版本必须出现在集群的 upgrade_policy 中（可用 describe-clusters --verbose 1 查看）。",
+        "升级到已上架版本要求集群健康（healthy）；升级到开发版本要求集群先停止。",
+    ],
     params=[
         Param("app_version", "str", True, "将要升级到的应用版本 ID"),
         Param("clusters", "list", True, "将要升级的集群 ID，一个或多个"),
@@ -267,6 +455,13 @@ UPGRADE_CLUSTERS = Action(
 
 ADD_CLUSTER_NODES = Action(
     "AddClusterNodes",
+    description="增加集群节点",
+    examples=[
+        "appcenter add-cluster-nodes --cluster cl-xxxx --node-count 2",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+    ],
     params=[
         Param("cluster", "str", True, "增加节点的集群 ID"),
         Param("node_count", "int", True, "增加的节点数量"),
@@ -280,6 +475,14 @@ ADD_CLUSTER_NODES = Action(
 
 DELETE_CLUSTER_NODES = Action(
     "DeleteClusterNodes",
+    description="删除集群节点",
+    examples=[
+        "appcenter delete-cluster-nodes --cluster cl-xxxx --nodes cln-1 --nodes cln-2",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+        "破坏性操作，建议先用 --dry-run 预览请求。",
+    ],
     params=[
         Param("cluster", "str", True, "集群的 ID"),
         Param("nodes", "list", True, "将要删除的集群节点的 ID"),
@@ -290,6 +493,13 @@ DELETE_CLUSTER_NODES = Action(
 
 ASSOCIATE_EIP_TO_CLUSTER_NODE = Action(
     "AssociateEipToClusterNode",
+    description="绑定公网 IP 到节点",
+    examples=[
+        "appcenter associate-eip-to-cluster-node --eip eip-xxxx --cluster-node cln-xxxx",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+    ],
     params=[
         Param("eip", "str", True, "公网 IP 的 ID"),
         Param("cluster_node", "str", True, "集群节点 ID"),
@@ -299,6 +509,13 @@ ASSOCIATE_EIP_TO_CLUSTER_NODE = Action(
 
 DISSOCIATE_EIP_FROM_CLUSTER_NODE = Action(
     "DissociateEipFromClusterNode",
+    description="解绑节点公网 IP",
+    examples=[
+        "appcenter dissociate-eip-from-cluster-node --eips eip-xxxx",
+    ],
+    notes=[
+        "异步操作，返回 job_id，可用 describe-cluster-jobs 查询进度。",
+    ],
     params=[Param("eips", "list", True, "将要解绑的公网 IP 的 ID")],
     table_columns=["job_id", "cluster_id"],
 )
@@ -309,6 +526,15 @@ DISSOCIATE_EIP_FROM_CLUSTER_NODE = Action(
 
 GET_CLUSTER_MONITOR = Action(
     "GetClusterMonitor",
+    description="获取集群监控数据",
+    examples=[
+        "appcenter get-cluster-monitor --resource cln-xxxx --step 5m --start-time 2026-09-10T00:00:00Z --end-time 2026-09-10T01:00:00Z --meters cpu --meters memory",
+    ],
+    notes=[
+        "只读命令，不会修改任何资源。",
+        "--step 可选 1m、5m、15m、30m、1h、2h、1d。",
+        "时间为 UTC，格式 YYYY-MM-DDTHH:MM:SSZ。",
+    ],
     params=[
         Param("version_id", "str", False, "集群应用版本 ID"),
         Param("app_id", "str", False, "集群应用 ID"),

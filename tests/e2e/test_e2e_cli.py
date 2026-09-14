@@ -69,6 +69,7 @@ MUTATING_COMMANDS = {
     "delete-cluster-nodes": ["--cluster", "cl-nonexistent", "--nodes", "cln-nonexistent"],
     "associate-eip-to-cluster-node": ["--eip", "eip-nonexistent", "--cluster-node", "cln-nonexistent"],
     "dissociate-eip-from-cluster-node": ["--eips", "eip-nonexistent"],
+    "upgrade-clusters": ["--app-version", "appv-nonexistent", "--clusters", "cl-nonexistent"],
 }
 
 
@@ -114,8 +115,8 @@ def test_help_lists_all_commands():
 
 def test_no_command_prints_help():
     r = run_cli()
-    assert r.returncode == 0
-    assert "usage:" in r.stdout
+    assert r.returncode == 2
+    assert "usage:" in r.stderr
 
 
 def test_unknown_command():
