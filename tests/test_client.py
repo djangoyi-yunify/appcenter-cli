@@ -31,6 +31,15 @@ def test_expand_params_multi_deploy_zones():
     }
 
 
+def test_expand_params_status_filter():
+    client = Client(Config(access_key_id="a", secret_access_key="s", zone="pek3"))
+    expanded = client._expand_params({"status": ["active", "suspended"]})
+    assert expanded == {
+        "status.1": "active",
+        "status.2": "suspended",
+    }
+
+
 def test_expand_params_list_of_dicts():
     client = Client(Config(access_key_id="a", secret_access_key="s", zone="pek3a"))
     expanded = client._expand_params(

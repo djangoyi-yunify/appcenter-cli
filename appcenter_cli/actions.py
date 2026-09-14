@@ -74,6 +74,7 @@ DESCRIBE_APP_VERSIONS = Action(
         Param("name", "str", False, "应用的名称"),
         Param("sort_key", "str", False, "结果排序的列"),
         Param("owner", "str", False, "按照用户账户过滤"),
+        Param("status", "list", False, "版本状态过滤，可重复传，如 active、suspended"),
         Param("verbose", "int", False, "是否返回冗长的信息，1 为是"),
         Param("offset", "int", False, "数据偏移量，默认为 0"),
         Param("limit", "int", False, "返回数据长度，默认为 20，最大 100"),

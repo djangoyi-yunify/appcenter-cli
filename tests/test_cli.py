@@ -101,3 +101,34 @@ def test_collect_resize_cluster_params():
     assert params["memory"] == 2048
     assert params["storage_size"] == 20
     assert params["instance_class"] == 202
+
+
+def test_describe_app_versions_has_status_param():
+    action = ACTIONS["describe-app-versions"]
+    assert "status" in action.param_names()
+    param = next(p for p in action.params if p.name == "status")
+    assert param.ptype == "list"
+
+
+def test_collect_status_as_list():
+    parser = _build_parser()
+    args = parser.parse_args(
+        [
+            "describe-app-versions",
+            "--app-ids", "app-zydumbxo",
+            "--status", "active",
+            "--status", "suspended",
+        ]
+    )
+    params = _collect_params(args, ACTIONS["describe-app-versions"])
+    assert params["app_ids"] == ["app-zydumbxo"]
+    assert params["status"] == ["active", "suspended"]
+
+
+def test_collect_status_absent():
+    parser = _build_parser()
+    args = parser.parse_args(
+        ["describe-app-versions", "--app-ids", "app-zydumbxo"]
+    )
+    params = _collect_params(args, ACTIONS["describe-app-versions"])
+    assert "status" not in params
