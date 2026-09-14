@@ -85,8 +85,7 @@
       "count": 1,
       "volume_class": 100
     },
-    "vxnet": "vxnet-kldf8dk",
-    "global_uuid": 0.123456789
+    "vxnet": "vxnet-kldf8dk"
   },
   "vpc": "rtr-52tkfywg",
   "ip": "0",
@@ -102,7 +101,7 @@
 > 说明：
 > - 多可用区：顶层 `zone=pek3`（region），`multi_deploy_zones=["pek3b","pek3d"]`，conf 内**不带** `zone` 字段。
 > - `vpc` 为 vxnet 所属 VPC 路由器 ID（`vxnet-kldf8dk` → `rtr-52tkfywg`）。
-> - `global_uuid` 为随机小数，用于区分同名集群。
+> - **`global_uuid` 为可选参数**：真实控制台请求会携带随机小数用于区分同名集群，但经真实 API 实证（`cl-dgpc9w07`），**不传该字段部署同样成功**，故模板中省略，避免所有集群使用相同值带来的潜在冲突。
 > - `env` 中 `required=yes` 的项（`disabled-commands`、`enable-acl`）按默认值显式填写；其余不传（平台取默认值）。
 
 ### 2.4 CLI 能力说明
@@ -130,8 +129,7 @@
       "count": 1,
       "volume_class": 200
     },
-    "vxnet": "vxnet-mn82b92",
-    "global_uuid": 0.987654321
+    "vxnet": "vxnet-mn82b92"
   },
   "zone": "pek3b",
   "vpc": "rtr-52tkfywg",

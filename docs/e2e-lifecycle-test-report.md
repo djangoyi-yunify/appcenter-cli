@@ -121,9 +121,15 @@
 - 改用 `appv-tvzeju2i`（`pek3` 区域可用）后部署成功
 - **结论**：部署前需确认版本可用区域与 vxnet 区域一致
 
+### 发现 5：`global_uuid` 为可选参数（已实证）
+
+- 真实控制台请求的 conf 中携带 `global_uuid`（随机小数，用于区分同名集群）
+- **实证**：创建不带 `global_uuid` 的集群（`cl-dgpc9w07`）部署成功并收敛 `active`，确认该字段**可选**
+- **结论**：测试计划 conf 模板已移除 `global_uuid`，避免所有集群使用相同值（如 `0.123456789`）带来的潜在冲突
+
 ## 5. 结论
 
 - CLI 的集群生命周期管理在真实 API 环境下**端到端可用**：创建（多/单可用区）、垂直扩容、水平扩容、修改配置、关闭/启动、删除均正常。
-- 通过真实测试发现：**单角色应用需显式传空 `node_role`**（`resize-cluster` 与 `add-cluster-nodes` 均如此）；**CLI `resize-cluster` 的 `--storage`/`--gpu` 参数名与 API 不一致**（待修正）。
+- 通过真实测试发现：**单角色应用需显式传空 `node_role`**（`resize-cluster` 与 `add-cluster-nodes` 均如此）；**CLI `resize-cluster` 的 `--storage`/`--gpu` 参数名与 API 不一致**（已修复）；**`global_uuid` 为可选参数**（已实证并移除）。
 - 测试集群已全部删除清理，无残留资源。
 - 为支持多可用区部署，CLI 新增 `--multi-deploy-zones` 参数（提交 `b79dcad`），单元测试 19 个全部通过。
