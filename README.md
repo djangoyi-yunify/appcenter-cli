@@ -9,7 +9,21 @@ AppCenter 集群、应用、节点、监控等资源。
 
 ## 安装
 
-从 Git 仓库安装（推荐，无需预先构建）：
+### 方式一：uv tool（推荐）
+
+使用 [uv](https://docs.astral.sh/uv/) 将 `appcenter` 作为全局工具安装（类似 pipx，自动隔离环境、管理可执行文件）：
+
+```bash
+uv tool install git+https://github.com/djangoyi-yunify/appcenter-cli.git
+```
+
+安装后 `appcenter` 命令即可全局使用：
+
+```bash
+appcenter --version
+```
+
+### 方式二：pip 从 Git 仓库安装
 
 ```bash
 # HTTPS（仓库公开时）
@@ -19,7 +33,7 @@ pip install git+https://github.com/djangoyi-yunify/appcenter-cli.git
 pip install git+ssh://git@github.com/djangoyi-yunify/appcenter-cli.git
 ```
 
-本地开发安装：
+### 方式三：本地开发安装
 
 ```bash
 pip install -e .
