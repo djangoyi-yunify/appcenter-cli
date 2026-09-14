@@ -196,13 +196,45 @@ appcenter get-cluster-monitor --resource cln-xxxx --step 5m \
 - 默认输出格式化 JSON，便于 AI Agent 解析。
 - 使用 `--output table` 输出对齐表格，便于人类阅读。
 
-## 开发
+## 开发与测试
+
+### 环境搭建
 
 ```bash
 uv venv .venv
-uv pip install -e . pytest
+uv pip install -e ".[dev]"
+```
+
+> `.[dev]` 安装项目及 `pyproject.toml` 中声明的开发依赖（pytest）。
+
+### 运行测试
+
+```bash
 .venv/bin/python -m pytest
 ```
+
+常用变体：
+
+```bash
+# 运行单个测试文件
+uv run pytest tests/test_cli.py
+
+# 运行单个用例
+uv run pytest tests/test_cli.py::test_xxx
+```
+
+测试类型：
+
+- `tests/` 下为**离线单元测试**（不访问真实 API）。
+- `tests/e2e/` 为**真实 API 端到端测试**，需要 `.qingcloud/config` 凭据，缺失时自动跳过。
+
+### 构建发行包
+
+```bash
+uv build
+```
+
+生成 `dist/` 下的 sdist 与 wheel。
 
 ## 参考
 
