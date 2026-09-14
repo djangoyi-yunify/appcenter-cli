@@ -252,6 +252,15 @@ UPDATE_CLUSTER_ENV = Action(
     table_columns=["job_id", "cluster_id"],
 )
 
+UPGRADE_CLUSTERS = Action(
+    "UpgradeClusters",
+    params=[
+        Param("app_version", "str", True, "将要升级到的应用版本 ID"),
+        Param("clusters", "list", True, "将要升级的集群 ID，一个或多个"),
+    ],
+    table_columns=["job_id", "cluster_ids"],
+)
+
 # ---------------------------------------------------------------------------
 # Cluster nodes
 # ---------------------------------------------------------------------------
@@ -335,6 +344,7 @@ ACTIONS = {
     "resize-cluster": RESIZE_CLUSTER,
     "change-cluster-vxnet": CHANGE_CLUSTER_VXNET,
     "update-cluster-env": UPDATE_CLUSTER_ENV,
+    "upgrade-clusters": UPGRADE_CLUSTERS,
     "add-cluster-nodes": ADD_CLUSTER_NODES,
     "delete-cluster-nodes": DELETE_CLUSTER_NODES,
     "associate-eip-to-cluster-node": ASSOCIATE_EIP_TO_CLUSTER_NODE,

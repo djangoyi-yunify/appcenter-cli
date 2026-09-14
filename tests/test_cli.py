@@ -132,3 +132,27 @@ def test_collect_status_absent():
     )
     params = _collect_params(args, ACTIONS["describe-app-versions"])
     assert "status" not in params
+
+
+def test_upgrade_clusters_has_params():
+    action = ACTIONS["upgrade-clusters"]
+    names = action.param_names()
+    assert "app_version" in names
+    assert "clusters" in names
+    param = next(p for p in action.params if p.name == "clusters")
+    assert param.ptype == "list"
+
+
+def test_collect_upgrade_clusters_params():
+    parser = _build_parser()
+    args = parser.parse_args(
+        [
+            "upgrade-clusters",
+            "--app-version", "appv-tvzeju2i",
+            "--clusters", "cl-x",
+            "--clusters", "cl-y",
+        ]
+    )
+    params = _collect_params(args, ACTIONS["upgrade-clusters"])
+    assert params["app_version"] == "appv-tvzeju2i"
+    assert params["clusters"] == ["cl-x", "cl-y"]
