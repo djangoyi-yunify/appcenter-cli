@@ -8,7 +8,7 @@
 | 测试环境 | 真实青云 API（`api.qingcloud.com`），`--config .qingcloud/config` |
 | 测试应用 | `app-y6i338bf`（active 8 个 + suspended 15 个 = 23 个版本） |
 | 测试类型 | **只读**（`describe-*`），无资源创建、无费用 |
-| 测试结果 | **7/7 全部通过** |
+| 测试结果 | **9/9 全部通过** |
 
 ## 2. 测试结果明细
 
@@ -21,6 +21,8 @@
 | S-05 | 状态一致性（逐版本校验） | ✅ 23 个版本 status 均属于过滤集合 |
 | S-06 | 无效状态值（draft） | ✅ 退出码 1，`ret_code=1100`（`InvailidRequestFormat`） |
 | S-07 | 分页组合（limit=5, offset=0/5） | ✅ 两页各 5 个，无重复 |
+| S-08 | suspended 版本按 version_id 查询 | ✅ `total_count=0`（suspended 版本无法按 version_id 定位） |
+| S-09 | 开发中版本查询（appv-p17zoert） | ✅ `total_count=0`（开发中版本 API 不可见） |
 
 ## 3. 测试发现
 
@@ -44,8 +46,29 @@
 
 - `--status suspended --limit 5 --offset 0/5` 分页正确，两页无重复版本。
 
+### 发现 5：`status` 字段是唯一的状态指示字段
+
+- 版本信息中**只有 `status` 字段**表示版本状态：`active`（上架）、`suspended`（已下架）。
+- `status_time` 记录状态变更时间（辅助字段）。
+- 其他字段（`visibility`、`console_id` 等）在 API 响应中均为 `None` 或不存在，**不表示状态**。
+- **"开发中"状态无对应字段**：开发中版本（如 `appv-p17zoert`）**不通过 API 暴露**，仅在 Web 控制台（应用开发平台）可见；按 `version_id` 查询返回 0，任何 `status` 过滤也查不到。
+
+### 发现 6：suspended 版本无法按 version_id 直接查询
+
+跨两个应用验证，规律一致：
+
+| 应用 | active 版本 | 按 version_id 可查 | suspended 版本 | 按 version_id 可查 |
+| --- | --- | --- | --- | --- |
+| `app-zydumbxo` | 8 | ✅ 8/8 | 24 | ❌ 0/24 |
+| `app-y6i338bf` | 8 | ✅ 8/8 | 15 | ❌ 0/15 |
+
+- **active 版本**：可按 `version_id` 直接查询。
+- **suspended 版本**：**只能**通过 `app_ids + status=suspended` 过滤查到，直接按 `version_id` 查询返回 0（即使组合 `app_ids + version_ids` 也查不到）。
+- **结论**：查询下架版本必须使用 `--status suspended` 过滤，无法通过 `--version-ids` 定位。
+
 ## 4. 结论
 
 - CLI 新增的 `--status` 过滤参数在真实 API 环境下**端到端可用**，单状态、多状态、分页组合均正常。
 - 该参数为 list 类型，序列化为 `status.1/.2`，与 API 一致（提交 `0985e15`）。
+- **`status` 是唯一状态指示字段**；"开发中"版本 API 不可见；**suspended 版本只能通过 `--status suspended` 过滤查询**，无法按 `version_id` 定位。
 - 本测试为只读，无资源创建、无清理需求。

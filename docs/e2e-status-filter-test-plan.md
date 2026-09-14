@@ -55,6 +55,8 @@
 | S-05 | 状态一致性 | 对 S-02/S-03/S-04 返回的每个版本校验 `status` 字段 | 每个版本 `status` 均属于过滤条件集合 |
 | S-06 | 无效状态值 | `describe-app-versions --app-ids app-y6i338bf --status draft` | 退出码非 0，`ret_code=1100`（`InvailidRequestFormat`） |
 | S-07 | 分页组合 | `describe-app-versions --app-ids app-y6i338bf --status suspended --limit 5 --offset 0` 与 `--offset 5` | 两页各 5 个，无重复，合计 10 个 |
+| S-08 | suspended 版本按 version_id 查询 | `describe-app-versions --version-ids <suspended_id>` | `ret_code=0`，`total_count=0`（suspended 版本无法按 version_id 定位） |
+| S-09 | 开发中版本查询 | `describe-app-versions --version-ids appv-p17zoert` | `ret_code=0`，`total_count=0`（开发中版本 API 不可见） |
 
 ## 5. 执行方式
 
