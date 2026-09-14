@@ -81,6 +81,17 @@ pip uninstall appcenter-cli
 
 ### 配置文件
 
+配置文件是**可选的**：凭据也可通过命令行参数或环境变量提供（见上文优先级）。仅当未通过命令行参数或环境变量提供凭据时，才会读取配置文件。
+
+- **默认存放位置**：`~/.qingcloud/config`
+- **自定义位置**：可将配置文件放在其他路径，并通过环境变量 `QINGCLOUD_CONFIG` 指定，例如：
+
+```bash
+export QINGCLOUD_CONFIG=/path/to/my-qingcloud-config
+```
+
+配置文件格式（INI）：
+
 ```ini
 [default]
 access_key_id = YOUR_ACCESS_KEY_ID
