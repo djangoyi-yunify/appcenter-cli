@@ -9,6 +9,18 @@ AppCenter 集群、应用、节点、监控等资源。
 
 ## 安装
 
+从 Git 仓库安装（推荐，无需预先构建）：
+
+```bash
+# HTTPS（仓库公开时）
+pip install git+https://github.com/djangoyi-yunify/appcenter-cli.git
+
+# SSH
+pip install git+ssh://git@github.com/djangoyi-yunify/appcenter-cli.git
+```
+
+本地开发安装：
+
 ```bash
 pip install -e .
 ```
