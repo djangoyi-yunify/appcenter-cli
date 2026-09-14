@@ -229,11 +229,28 @@
 | M-04 | 删除单可用区集群 | `delete-clusters --clusters <id>` | 退出码 0，返回 `job_id`，`ret_code=0` |
 | M-05 | 等待删除完成 | 轮询 `describe-clusters --clusters <id>` | 状态收敛为 `deleted` 或查询返回空（超时上限 10 分钟） |
 
+### N. global_uuid 对比测试
+
+> 验证 `global_uuid` 参数：创建 **2 个**多可用区集群，一个 conf 携带 `global_uuid`（**用工具生成随机值**，如 Python `uuid.uuid4()`，不使用固定值），另一个不携带。两者均应部署成功并收敛 `active`。
+>
+> **⚠️ 人工介入验证**：`global_uuid` 是否真正写入节点元数据，**无法通过 API 验证**，需人工 SSH 登录集群节点内部查看元数据（如 `/etc/` 下配置文件或应用元数据）。测试在 N-05 后**暂停并等待用户确认**，人工完成节点内验证后再执行删除。
+
+| ID | 用例 | 步骤 | 预期结果 |
+| --- | --- | --- | --- |
+| N-01 | 生成 global_uuid | `python -c "import uuid; print(uuid.uuid4())"` | 输出随机 UUID 字符串（每次不同） |
+| N-02 | 部署带 global_uuid 集群 | `deploy-app-version --zone pek3 --multi-deploy-zones pek3b --multi-deploy-zones pek3d --version-id appv-tvzeju2i --conf '<模板+global_uuid>'` | 退出码 0，JSON 含 `cluster_id`、`job_id`，`ret_code=0` |
+| N-03 | 等待集群 active | 轮询 `describe-clusters --clusters <id>` | 状态收敛为 `active`（超时上限 15 分钟） |
+| N-04 | 部署不带 global_uuid 集群 | `deploy-app-version --zone pek3 --multi-deploy-zones pek3b --multi-deploy-zones pek3d --version-id appv-tvzeju2i --conf '<模板（无 global_uuid）>'` | 退出码 0，JSON 含 `cluster_id`、`job_id`，`ret_code=0` |
+| N-05 | 等待集群 active | 轮询 `describe-clusters --clusters <id>` | 状态收敛为 `active`（超时上限 15 分钟） |
+| N-06 | **⚠️ 人工介入**：SSH 登录两个集群节点，查看节点内部元数据 | 人工执行（如 `ssh` 登录后检查 `/etc/` 下配置/元数据文件） | 确认带 global_uuid 的集群节点元数据含该值，不带的不含；**等待用户确认后继续** |
+| N-07 | 删除两个集群 | `delete-clusters --clusters <id1> --clusters <id2>` | 退出码 0，返回 `job_id`，`ret_code=0` |
+| N-08 | 等待删除完成 | 轮询 `describe-clusters` | 状态收敛为 `deleted` 或查询返回空（超时上限 10 分钟） |
+
 ## 5. 执行方式
 
 ```bash
 cd /workspace/appcenter-cli
-# 手动按 G → L → M 顺序执行（每个阶段依赖前一阶段结果，不适合纯 pytest 参数化）
+# 手动按 G → L → M → N 顺序执行（每个阶段依赖前一阶段结果，不适合纯 pytest 参数化）
 ```
 
 执行脚本将按阶段组织，每个阶段：
@@ -243,8 +260,9 @@ cd /workspace/appcenter-cli
 
 ## 6. 风险与限制
 
-- **真实资源与费用**：测试会创建真实集群（最小规格，多可用区 + 单可用区各一个），产生少量费用；测试结束必须删除。
+- **真实资源与费用**：测试会创建真实集群（最小规格，多可用区 + 单可用区 + global_uuid 对比 2 个），产生少量费用；测试结束必须删除。
 - **异步任务耗时**：创建/扩容/启停均为异步任务，单步可能耗时数分钟，需设置合理轮询超时。
 - **应用能力限制**：若 Redis Standalone 不支持某项操作（如水平扩容），API 会返回业务错误，测试将如实记录并跳过该阶段，不视为 CLI 缺陷。
+- **人工介入**：`global_uuid` 是否写入节点元数据**无法通过 API 验证**，需人工 SSH 登录节点内部查看；测试在 N-06 暂停并等待用户确认。
 - **严禁误操作**：所有变更命令的目标 ID 必须来自本测试创建的集群；脚本内对目标 ID 做前缀/来源校验，防止误伤其他集群。
 - **凭据安全**：`.qingcloud/config` 含真实凭据，已 git 排除，权限 600。
