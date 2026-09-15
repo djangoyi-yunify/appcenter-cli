@@ -1,4 +1,4 @@
-"""Configuration loading for the AppCenter CLI.
+"""Configuration loading for the qc-tools command line tools.
 
 Credentials and defaults are resolved in the following order (highest
 priority first):

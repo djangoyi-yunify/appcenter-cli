@@ -10,7 +10,7 @@ from appcenter_cli.cli import (
     UsageError,
     main,
 )
-from appcenter_cli.config import ConfigError
+from qc_cli.config import ConfigError
 
 
 def test_check_required_any_satisfied():

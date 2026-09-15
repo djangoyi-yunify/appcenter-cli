@@ -3,7 +3,7 @@
 青云（QingCloud）命令行工具集，专为 AI Agent 设计，提供多套 CLI：
 
 - **App Center CLI**（`appcenter`）：管理 AppCenter 集群、应用、节点、监控等资源。
-- **IaaS CLI**（`iaas`）：管理青云 IaaS 云资源（计算、存储、网络等），**规划中，尚未实现**。
+- **IaaS CLI**（`iaas`）：管理青云 IaaS 云资源，当前覆盖云服务器与虚拟机镜像，其余按需增加。
 
 青云官方 CLI 工具不包含 AppCenter 相关功能，本工具基于青云 API 文档
 （https://docsv4.qingcloud.com/user_guide/development_docs/api/）实现，
@@ -200,6 +200,86 @@ appcenter wiki describe-clusters
 | `get-cluster-monitor` | GetClusterMonitor | 获取集群监控数据 |
 
 > 另有 `wiki` 子命令（非 API 动作），用于查看各命令的详细用法与注意事项，见上文「wiki 子命令」。
+
+## IaaS CLI
+
+`iaas` 命令管理青云 IaaS 云资源，当前覆盖**云服务器**与**虚拟机镜像**，其余 IaaS 服务（网络、存储、EIP 等）按需后续增加。
+
+### 使用
+
+```bash
+# 查看所有命令
+iaas --help
+
+# 查看某个命令的详细用法与注意事项
+iaas wiki run-instances
+
+# 列出云服务器（JSON 输出，默认）
+iaas describe-instances
+
+# 列出云服务器（表格输出，便于人类阅读）
+iaas describe-instances --output table
+
+# 创建云服务器（先预览请求，不真正执行）
+iaas run-instances --image-id img-xxxx --instance-type small_b --dry-run
+
+# 启动/停止/重启/销毁云服务器
+iaas start-instances --instances i-xxxx
+iaas stop-instances --instances i-xxxx
+iaas restart-instances --instances i-xxxx
+iaas terminate-instances --instances i-xxxx
+
+# 列出镜像
+iaas describe-images --visibility private
+
+# 基于云服务器制作镜像
+iaas capture-instance --instance i-xxxx --image-name my-image
+```
+
+`iaas` 与 `appcenter` 共享同一套认证配置、输出格式与辅助参数（`--dry-run`/`--trace`/`--output`/`wiki`），见上文「认证配置」「输出格式」「面向 AI Agent 的辅助参数」。
+
+### 支持的命令
+
+#### 云服务器
+
+| 命令 | API 动作 | 说明 |
+| --- | --- | --- |
+| `describe-instances` | DescribeInstances | 获取云服务器列表 |
+| `run-instances` | RunInstances | 创建云服务器 |
+| `terminate-instances` | TerminateInstances | 销毁云服务器（进回收站） |
+| `start-instances` | StartInstances | 启动云服务器 |
+| `stop-instances` | StopInstances | 停止云服务器 |
+| `restart-instances` | RestartInstances | 重启云服务器 |
+| `reset-instances` | ResetInstances | 重置云服务器系统盘 |
+| `resize-instances` | ResizeInstances | 调整云服务器配置 |
+| `modify-instance-attributes` | ModifyInstanceAttributes | 修改云服务器名称和描述 |
+| `describe-instance-types` | DescribeInstanceTypes | 获取支持的云服务器类型 |
+| `clone-instances` | CloneInstances | 克隆云服务器 |
+| `cease-instances` | CeaseInstances | 彻底销毁云服务器 |
+| `create-instance-groups` | CreateInstanceGroups | 创建安置策略组 |
+| `delete-instance-groups` | DeleteInstanceGroups | 删除安置策略组 |
+| `join-instance-group` | JoinInstanceGroup | 云服务器加入安置策略组 |
+| `leave-instance-group` | LeaveInstanceGroup | 云服务器离开安置策略组 |
+| `describe-instance-groups` | DescribeInstanceGroups | 获取安置策略组信息 |
+
+#### 虚拟机镜像
+
+| 命令 | API 动作 | 说明 |
+| --- | --- | --- |
+| `describe-images` | DescribeImages | 获取镜像列表 |
+| `capture-instance` | CaptureInstance | 基于云服务器制作自有镜像 |
+| `capture-image-from-snapshot` | CaptureImageFromSnapshot | 将指定备份导出为镜像 |
+| `clone-images` | CloneImages | 克隆镜像 |
+| `delete-images` | DeleteImages | 删除自有镜像 |
+| `modify-image-attributes` | ModifyImageAttributes | 修改镜像名称和描述 |
+| `describe-image-users` | DescribeImageUsers | 查询镜像共享的用户列表 |
+| `grant-image-to-users` | GrantImageToUsers | 共享镜像给指定的用户 |
+| `revoke-image-from-users` | RevokeImageFromUsers | 撤销镜像共享 |
+
+### 尚未实现
+
+- **远程桌面代理**（CreateBrokers/DeleteBrokers）：青云官方 SDK 未实现，本项目暂不实现。
+- 其他 IaaS 服务（网络、存储、EIP、SSH 密钥等）：按应用场景需求后续增加。
 
 ## 尚未实现的 API 动作
 

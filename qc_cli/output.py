@@ -1,4 +1,4 @@
-"""Output formatting for the AppCenter CLI.
+"""Output formatting for the qc-tools command line tools.
 
 Default output is pretty-printed JSON (best for AI agents). A
 human-readable table view is available via ``--output table``.

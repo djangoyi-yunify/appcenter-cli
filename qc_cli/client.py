@@ -1,8 +1,8 @@
 """Low-level HTTP client for the QingCloud API.
 
 Handles parameter serialization (list/dict expansion into dotted keys),
-request signing, and response parsing. The AppCenter actions are served
-from the same /iaas/ endpoint as the rest of the QingCloud API.
+request signing, and response parsing. All QingCloud actions (AppCenter,
+IaaS, ...) are served from the same /iaas/ endpoint.
 """
 
 import json
@@ -27,7 +27,7 @@ class APIError(Exception):
 
 
 class Client:
-    """A thin client for the QingCloud AppCenter API."""
+    """A thin client for the QingCloud API."""
 
     def __init__(self, config: Config):
         self.config = config

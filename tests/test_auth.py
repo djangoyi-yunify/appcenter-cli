@@ -3,7 +3,7 @@ import hashlib
 import hmac
 import urllib.parse
 
-from appcenter_cli.auth import sign_request, utc_timestamp
+from qc_cli.auth import sign_request, utc_timestamp
 
 
 def test_signature_matches_doc_example():

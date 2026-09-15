@@ -17,9 +17,10 @@ dev = ["pytest>=7.0"]
 
 [project.scripts]
 appcenter = "appcenter_cli.cli:main"
+iaas = "iaas_cli.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["appcenter_cli*", "iaas_cli*"]
+include = ["qc_cli*", "appcenter_cli*", "iaas_cli*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

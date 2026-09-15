@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from appcenter_cli.config import ConfigError, load_config
+from qc_cli.config import ConfigError, load_config
 
 
 def test_load_config_from_env(monkeypatch, tmp_path):
@@ -45,7 +45,7 @@ def test_flags_override_env(monkeypatch):
 
 
 def test_validate_missing_credentials():
-    from appcenter_cli.config import Config
+    from qc_cli.config import Config
 
     cfg = Config()
     with pytest.raises(ConfigError):

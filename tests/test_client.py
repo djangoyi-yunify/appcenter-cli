@@ -1,7 +1,7 @@
 import json
 
-from appcenter_cli.client import Client
-from appcenter_cli.config import Config
+from qc_cli.client import Client
+from qc_cli.config import Config
 
 
 def test_expand_params_lists():
