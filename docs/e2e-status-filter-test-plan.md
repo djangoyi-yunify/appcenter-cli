@@ -61,7 +61,7 @@
 ## 5. 执行方式
 
 ```bash
-cd /workspace/appcenter-cli
+cd /workspace/qc-tools
 # 按 S-01 → S-07 顺序执行，均为只读命令
 ```
 

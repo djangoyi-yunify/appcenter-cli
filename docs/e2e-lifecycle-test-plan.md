@@ -249,7 +249,7 @@
 ## 5. 执行方式
 
 ```bash
-cd /workspace/appcenter-cli
+cd /workspace/qc-tools
 # 手动按 G → L → M → N 顺序执行（每个阶段依赖前一阶段结果，不适合纯 pytest 参数化）
 ```
 

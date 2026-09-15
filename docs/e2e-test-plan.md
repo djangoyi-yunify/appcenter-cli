@@ -115,7 +115,7 @@
 ## 5. 执行方式
 
 ```bash
-cd /workspace/appcenter-cli
+cd /workspace/qc-tools
 .venv/bin/python -m pytest tests/e2e -v
 ```
 

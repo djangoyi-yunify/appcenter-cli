@@ -133,7 +133,7 @@
 ## 5. 执行方式
 
 ```bash
-cd /workspace/appcenter-cli
+cd /workspace/qc-tools
 # 先扩展 CLI：actions.py 新增 UPGRADE_CLUSTERS（app_version、clusters）
 # 按 U-01 → U-06 顺序执行（每个用例依赖前一用例结果，不适合纯 pytest 参数化）
 ```

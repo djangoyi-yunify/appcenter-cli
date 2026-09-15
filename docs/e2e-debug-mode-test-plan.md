@@ -200,7 +200,7 @@
 ## 5. 执行方式
 
 ```bash
-cd /workspace/appcenter-cli
+cd /workspace/qc-tools
 # 按 D-01 → D-02 → D-03 → D-04 → D-05/D-06 顺序执行（每个用例依赖前一用例结果，不适合纯 pytest 参数化）
 ```
 
