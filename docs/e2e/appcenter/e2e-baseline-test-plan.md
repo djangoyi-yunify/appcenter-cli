@@ -123,7 +123,7 @@ cd /workspace/qc-tools
 
 - **2026-09-11 已执行**：54 个 e2e 用例全部通过（含 15 个单元测试共 69 通过）
 - 发现并修复 3 个缺陷：签名双重 URL 编码（`client.py`）、`describe-cluster-env` 参数名错误（`actions.py`）、`describe-app-versions` 缺少"至少一个"参数约束（`actions.py` + `cli.py`）
-- 详细结果见 [e2e-test-report.md](e2e-test-report.md)
+- 详细结果见 [e2e-baseline-test-report.md](e2e-baseline-test-report.md)
 
 ## 7. 风险与限制
 
