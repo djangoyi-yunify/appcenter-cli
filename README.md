@@ -1,6 +1,9 @@
-# appcenter-cli
+# qc-tools
 
-青云 AppCenter 命令行工具，专为 AI Agent 设计。
+青云（QingCloud）命令行工具集，专为 AI Agent 设计，提供多套 CLI：
+
+- **App Center CLI**（`appcenter`）：管理 AppCenter 集群、应用、节点、监控等资源。
+- **IaaS CLI**（`iaas`）：管理青云 IaaS 云资源（计算、存储、网络等），**规划中，尚未实现**。
 
 青云官方 CLI 工具不包含 AppCenter 相关功能，本工具基于青云 API 文档
 （https://docsv4.qingcloud.com/user_guide/development_docs/api/）实现，
@@ -11,10 +14,10 @@ AppCenter 集群、应用、节点、监控等资源。
 
 ### 方式一：uv tool（推荐）
 
-使用 [uv](https://docs.astral.sh/uv/) 将 `appcenter` 作为全局工具安装（类似 pipx，自动隔离环境、管理可执行文件）：
+使用 [uv](https://docs.astral.sh/uv/) 将 `qc-tools` 作为全局工具安装（类似 pipx，自动隔离环境、管理可执行文件）：
 
 ```bash
-uv tool install git+https://github.com/djangoyi-yunify/appcenter-cli.git
+uv tool install git+https://github.com/djangoyi-yunify/qc-tools.git
 ```
 
 安装后 `appcenter` 命令即可全局使用：
@@ -27,7 +30,7 @@ appcenter --version
 >
 > ```bash
 > UV_TOOL_DIR=/tmp/uv-tools UV_TOOL_BIN_DIR=/tmp/uv-bin \
->   uv tool install git+https://github.com/djangoyi-yunify/appcenter-cli.git
+>   uv tool install git+https://github.com/djangoyi-yunify/qc-tools.git
 > export PATH="/tmp/uv-bin:$PATH"
 > ```
 
@@ -35,10 +38,10 @@ appcenter --version
 
 ```bash
 # HTTPS（仓库公开时）
-pip install git+https://github.com/djangoyi-yunify/appcenter-cli.git
+pip install git+https://github.com/djangoyi-yunify/qc-tools.git
 
 # SSH
-pip install git+ssh://git@github.com/djangoyi-yunify/appcenter-cli.git
+pip install git+ssh://git@github.com/djangoyi-yunify/qc-tools.git
 ```
 
 ### 方式三：本地开发安装
@@ -53,10 +56,10 @@ pip install -e .
 
 ```bash
 # 方式一：uv tool 安装
-uv tool uninstall appcenter-cli
+uv tool uninstall qc-tools
 
 # 方式二 / 方式三：pip 安装
-pip uninstall appcenter-cli
+pip uninstall qc-tools
 ```
 
 > 提示：卸载仅移除 `appcenter` 命令与 Python 包，**不会删除**认证配置文件（`~/.qingcloud/config`）及其中保存的凭据。如需彻底清理，请手动删除该配置文件。

@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "appcenter-cli"
+name = "qc-tools"
 version = "0.1.0"
-description = "QingCloud AppCenter command line tool for AI agents"
+description = "QingCloud command line tools for AI agents (AppCenter, IaaS, ...)"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "Apache-2.0" }
@@ -19,7 +19,7 @@ dev = ["pytest>=7.0"]
 appcenter = "appcenter_cli.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["appcenter_cli*"]
+include = ["appcenter_cli*", "iaas_cli*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
