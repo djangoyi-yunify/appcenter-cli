@@ -451,6 +451,104 @@ REVOKE_IMAGE_FROM_USERS = Action(
 )
 
 # ---------------------------------------------------------------------------
+# SSH key pairs
+# ---------------------------------------------------------------------------
+
+DESCRIBE_KEY_PAIRS = Action(
+    "DescribeKeyPairs",
+    description="获取密钥对信息",
+    examples=[
+        "iaas describe-key-pairs",
+        "iaas describe-key-pairs --keypairs kp-xxxx --output table",
+        "iaas describe-key-pairs --search-word demo",
+    ],
+    notes=[
+        "只读命令，不会修改任何资源。",
+        "默认返回 20 条，可用 --limit 调整（最大 100）。",
+    ],
+    params=[
+        Param("keypairs", "list", False, "密钥对 ID 数组"),
+        Param("encrypt_method", "str", False, "加密方式，如 ssh-rsa、ssh-dss"),
+        Param("search_word", "str", False, "搜索关键字"),
+        Param("owner", "str", False, "资源所有者 ID"),
+        Param("verbose", "int", False, "是否返回冗长信息，1 为是"),
+        Param("offset", "int", False, "数据偏移量，默认 0"),
+        Param("limit", "int", False, "返回数据长度，默认 20，最大 100"),
+        Param("tags", "list", False, "标签 ID 数组"),
+    ],
+    table_columns=["keypair_id", "keypair_name", "encrypt_method", "create_time"],
+)
+
+CREATE_KEY_PAIR = Action(
+    "CreateKeyPair",
+    description="创建密钥对",
+    examples=[
+        "iaas create-key-pair --keypair-name my-key",
+        "iaas create-key-pair --keypair-name my-key --mode user --public-key 'ssh-rsa AAAA...'",
+    ],
+    notes=[
+        "mode 取值：system（系统生成密钥对）或 user（使用用户提供的公钥）。",
+        "mode=user 时需提供 --public-key。",
+        "system 模式创建后返回私钥，请妥善保存。",
+    ],
+    params=[
+        Param("keypair_name", "str", True, "密钥对名称"),
+        Param("mode", "str", False, "创建模式，system 或 user，默认 system"),
+        Param("encrypt_method", "str", False, "加密方式，ssh-rsa 或 ssh-dss，默认 ssh-rsa"),
+        Param("public_key", "str", False, "用户公钥内容（mode=user 时必填）"),
+        Param("target_user", "str", False, "资源所属子账户 ID"),
+    ],
+)
+
+DELETE_KEY_PAIRS = Action(
+    "DeleteKeyPairs",
+    description="删除密钥对",
+    examples=["iaas delete-key-pairs --keypairs kp-xxxx --dry-run"],
+    notes=[
+        "删除密钥对，已绑定该密钥对的云服务器不受影响。",
+        "破坏性操作，建议先用 --dry-run 预览请求。",
+    ],
+    params=[Param("keypairs", "list", True, "密钥对 ID 数组")],
+)
+
+MODIFY_KEY_PAIR_ATTRIBUTES = Action(
+    "ModifyKeyPairAttributes",
+    description="修改密钥对名称和描述",
+    examples=[
+        "iaas modify-key-pair-attributes --keypair kp-xxxx --keypair-name new-name",
+        "iaas modify-key-pair-attributes --keypair kp-xxxx --description 'updated'",
+    ],
+    notes=["修改密钥对的名称、描述等属性。"],
+    params=[
+        Param("keypair", "str", True, "密钥对 ID"),
+        Param("keypair_name", "str", False, "密钥对名称"),
+        Param("description", "str", False, "密钥对描述"),
+    ],
+)
+
+ATTACH_KEY_PAIRS = Action(
+    "AttachKeyPairs",
+    description="加载密钥对到云服务器",
+    examples=["iaas attach-key-pairs --keypairs kp-xxxx --instances i-xxxx"],
+    notes=["将密钥对绑定到云服务器，需云服务器处于 stopped 状态。"],
+    params=[
+        Param("keypairs", "list", True, "密钥对 ID 数组"),
+        Param("instances", "list", True, "云服务器 ID 数组"),
+    ],
+)
+
+DETACH_KEY_PAIRS = Action(
+    "DetachKeyPairs",
+    description="卸载云服务器上的密钥对",
+    examples=["iaas detach-key-pairs --keypairs kp-xxxx --instances i-xxxx"],
+    notes=["将密钥对从云服务器上解绑。"],
+    params=[
+        Param("keypairs", "list", True, "密钥对 ID 数组"),
+        Param("instances", "list", True, "云服务器 ID 数组"),
+    ],
+)
+
+# ---------------------------------------------------------------------------
 # Command registry
 # ---------------------------------------------------------------------------
 
@@ -484,4 +582,11 @@ ACTIONS = {
     "describe-image-users": DESCRIBE_IMAGE_USERS,
     "grant-image-to-users": GRANT_IMAGE_TO_USERS,
     "revoke-image-from-users": REVOKE_IMAGE_FROM_USERS,
+    # SSH key pairs
+    "describe-key-pairs": DESCRIBE_KEY_PAIRS,
+    "create-key-pair": CREATE_KEY_PAIR,
+    "delete-key-pairs": DELETE_KEY_PAIRS,
+    "modify-key-pair-attributes": MODIFY_KEY_PAIR_ATTRIBUTES,
+    "attach-key-pairs": ATTACH_KEY_PAIRS,
+    "detach-key-pairs": DETACH_KEY_PAIRS,
 }

@@ -3,7 +3,7 @@
 青云（QingCloud）命令行工具集，专为 AI Agent 设计，提供多套 CLI：
 
 - **App Center CLI**（`appcenter`）：管理 AppCenter 集群、应用、节点、监控等资源。
-- **IaaS CLI**（`iaas`）：管理青云 IaaS 云资源，当前覆盖云服务器与虚拟机镜像，其余按需增加。
+- **IaaS CLI**（`iaas`）：管理青云 IaaS 云资源，当前覆盖云服务器、虚拟机镜像与 SSH 密钥，其余按需增加。
 
 青云官方 CLI 工具不包含 AppCenter 相关功能，本工具基于青云 API 文档
 （https://docsv4.qingcloud.com/user_guide/development_docs/api/）实现，
@@ -203,7 +203,7 @@ appcenter wiki describe-clusters
 
 ## IaaS CLI
 
-`iaas` 命令管理青云 IaaS 云资源，当前覆盖**云服务器**与**虚拟机镜像**，其余 IaaS 服务（网络、存储、EIP 等）按需后续增加。
+`iaas` 命令管理青云 IaaS 云资源，当前覆盖**云服务器**、**虚拟机镜像**与**SSH 密钥**，其余 IaaS 服务（网络、存储、EIP 等）按需后续增加。
 
 ### 使用
 
@@ -276,10 +276,21 @@ iaas capture-instance --instance i-xxxx --image-name my-image
 | `grant-image-to-users` | GrantImageToUsers | 共享镜像给指定的用户 |
 | `revoke-image-from-users` | RevokeImageFromUsers | 撤销镜像共享 |
 
+#### SSH 密钥
+
+| 命令 | API 动作 | 说明 |
+| --- | --- | --- |
+| `describe-key-pairs` | DescribeKeyPairs | 获取密钥对信息 |
+| `create-key-pair` | CreateKeyPair | 创建密钥对 |
+| `delete-key-pairs` | DeleteKeyPairs | 删除密钥对 |
+| `modify-key-pair-attributes` | ModifyKeyPairAttributes | 修改密钥对名称和描述 |
+| `attach-key-pairs` | AttachKeyPairs | 加载密钥对到云服务器 |
+| `detach-key-pairs` | DetachKeyPairs | 卸载云服务器上的密钥对 |
+
 ### 尚未实现
 
 - **远程桌面代理**（CreateBrokers/DeleteBrokers）：青云官方 SDK 未实现，本项目暂不实现。
-- 其他 IaaS 服务（网络、存储、EIP、SSH 密钥等）：按应用场景需求后续增加。
+- 其他 IaaS 服务（网络、存储、EIP 等）：按应用场景需求后续增加。
 
 ## 尚未实现的 API 动作
 

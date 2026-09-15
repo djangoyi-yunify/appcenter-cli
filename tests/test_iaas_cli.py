@@ -13,7 +13,7 @@ def _parser():
 
 
 def test_action_registry_covers_instances_images():
-    """The registry must cover cloud servers, instance groups and images."""
+    """The registry must cover cloud servers, instance groups, images and SSH keys."""
     expected = {
         # Cloud servers
         "describe-instances", "run-instances", "terminate-instances",
@@ -29,6 +29,9 @@ def test_action_registry_covers_instances_images():
         "capture-image-from-snapshot", "clone-images", "delete-images",
         "modify-image-attributes", "describe-image-users",
         "grant-image-to-users", "revoke-image-from-users",
+        # SSH key pairs
+        "describe-key-pairs", "create-key-pair", "delete-key-pairs",
+        "modify-key-pair-attributes", "attach-key-pairs", "detach-key-pairs",
     }
     assert set(ACTIONS) == expected
 
@@ -62,6 +65,25 @@ def test_grant_image_to_users_requires_image_and_users():
     assert "users" in action.required_params()
     param = next(p for p in action.params if p.name == "users")
     assert param.ptype == "list"
+
+
+def test_create_key_pair_requires_name():
+    action = ACTIONS["create-key-pair"]
+    assert "keypair_name" in action.required_params()
+
+
+def test_attach_key_pairs_requires_keypairs_and_instances():
+    action = ACTIONS["attach-key-pairs"]
+    assert "keypairs" in action.required_params()
+    assert "instances" in action.required_params()
+    kp = next(p for p in action.params if p.name == "keypairs")
+    assert kp.ptype == "list"
+
+
+def test_describe_key_pairs_has_table_columns():
+    action = ACTIONS["describe-key-pairs"]
+    assert "keypair_id" in action.table_columns
+    assert "keypair_name" in action.table_columns
 
 
 def test_collect_list_params():
